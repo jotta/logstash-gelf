@@ -28,9 +28,17 @@ public class LogMessageField implements MessageField {
      * Named references to common log event fields.
      */
     public static enum NamedLogField {
-        Time("Time"), Severity("Severity"), ThreadName("Thread"), SourceClassName("SourceClassName"), SourceSimpleClassName(
-                "SourceSimpleClassName"), SourceMethodName("SourceMethodName"), SourceLineNumber("SourceLineNumber"), Server(
-                "Server"), LoggerName("LoggerName"), Marker("Marker"), NDC("NDC");
+        Time("Time"),
+        Severity("Severity"),
+        ThreadName("Thread"),
+        SourceClassName("SourceClassName"),
+        SourceSimpleClassName("SourceSimpleClassName"),
+        SourceMethodName("SourceMethodName"),
+        SourceLineNumber("SourceLineNumber"),
+        Server("Server"),
+        LoggerName("LoggerName"),
+        Marker("Marker"),
+        NDC("NDC");
 
         private final String fieldName;
 

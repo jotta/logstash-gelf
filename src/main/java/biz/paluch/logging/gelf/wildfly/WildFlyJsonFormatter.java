@@ -80,24 +80,25 @@ import biz.paluch.logging.gelf.jboss7.JBoss7JulLogEvent;
 public class WildFlyJsonFormatter extends ExtFormatter {
 
     public static final String MULTI_VALUE_DELIMITTER = ",";
+    public static final String MULTI_VALUE_MAPPING_DELIMITTER = "=";
     private MdcGelfMessageAssembler gelfMessageAssembler = new MdcGelfMessageAssembler();
     private String lineBreak = "\n";
     private boolean wasSetFieldsCalled = false;
 
-    public static final Set<LogMessageField.NamedLogField> SUPPORTED_FIELDS;
+    public static final Set<LogMessageField> SUPPORTED_FIELDS;
 
     static {
-        Set<LogMessageField.NamedLogField> supportedFields = new LinkedHashSet<LogMessageField.NamedLogField>();
+        Set<LogMessageField> supportedFields = new LinkedHashSet<LogMessageField>();
 
-        supportedFields.add(Time);
-        supportedFields.add(Severity);
-        supportedFields.add(ThreadName);
-        supportedFields.add(SourceClassName);
-        supportedFields.add(SourceMethodName);
-        supportedFields.add(SourceSimpleClassName);
-        supportedFields.add(LoggerName);
-        supportedFields.add(NDC);
-        supportedFields.add(Server);
+        supportedFields.add(new LogMessageField(Time.getFieldName(), Time));
+        supportedFields.add(new LogMessageField(Severity.getFieldName(), Severity));
+        supportedFields.add(new LogMessageField(ThreadName.getFieldName(), ThreadName));
+        supportedFields.add(new LogMessageField(SourceClassName.getFieldName(), SourceClassName));
+        supportedFields.add(new LogMessageField(SourceMethodName.getFieldName(), SourceMethodName));
+        supportedFields.add(new LogMessageField(SourceSimpleClassName.getFieldName(), SourceSimpleClassName));
+        supportedFields.add(new LogMessageField(LoggerName.getFieldName(), LoggerName));
+        supportedFields.add(new LogMessageField(NDC.getFieldName(), NDC));
+        supportedFields.add(new LogMessageField(Server.getFieldName(), Server));
 
         SUPPORTED_FIELDS = Collections.unmodifiableSet(supportedFields);
     }
@@ -122,30 +123,41 @@ public class WildFlyJsonFormatter extends ExtFormatter {
     public void setFields(String fieldSpec) {
 
         String[] properties = fieldSpec.split(MULTI_VALUE_DELIMITTER);
-        List<LogMessageField.NamedLogField> fields = new ArrayList<LogMessageField.NamedLogField>();
+        List<LogMessageField> fields = new ArrayList<LogMessageField>();
         for (String field : properties) {
+            String[] keyValue = fieldSpec.split(MULTI_VALUE_MAPPING_DELIMITTER);
+            if (keyValue.length == 2) {
+                String key = keyValue[0];
+                String value = keyValue[1];
+                LogMessageField.NamedLogField namedLogField = LogMessageField.NamedLogField.byName(key);
 
-            LogMessageField.NamedLogField namedLogField = LogMessageField.NamedLogField.byName(field.trim());
-            if (namedLogField == null) {
-                throw new IllegalArgumentException("Cannot resolve field name '" + field
-                        + "' to a field. Supported field names are: " + SUPPORTED_FIELDS);
+                LogMessageField logMessageField = new LogMessageField(value, namedLogField);
+
+                fields.add(logMessageField);
+            } else {
+                String key = keyValue[0];
+                LogMessageField.NamedLogField namedLogField = LogMessageField.NamedLogField.byName(key);
+                if (namedLogField == null) {
+                    throw new IllegalArgumentException("Cannot resolve field name '" + field
+                                                               + "' to a field. Supported field names are: " + SUPPORTED_FIELDS);
+                }
+
+                if (!SUPPORTED_FIELDS.contains(namedLogField)) {
+                    throw new IllegalArgumentException("Field '" + field + "' is not supported. Supported field names are: "
+                                                               + SUPPORTED_FIELDS);
+                }
+                LogMessageField logMessageField = new LogMessageField(namedLogField.getFieldName(), namedLogField);
+
+                fields.add(logMessageField);
             }
-
-            if (!SUPPORTED_FIELDS.contains(namedLogField)) {
-                throw new IllegalArgumentException("Field '" + field + "' is not supported. Supported field names are: "
-                        + SUPPORTED_FIELDS);
-            }
-
-            fields.add(namedLogField);
         }
 
         addFields(fields);
 
     }
 
-    private void addFields(Collection<LogMessageField.NamedLogField> fields) {
-        gelfMessageAssembler.addFields(LogMessageField.getDefaultMapping(fields
-                .toArray(new LogMessageField.NamedLogField[fields.size()])));
+    private void addFields(Collection<LogMessageField> fields) {
+        gelfMessageAssembler.addFields(fields);
 
         wasSetFieldsCalled = true;
     }
