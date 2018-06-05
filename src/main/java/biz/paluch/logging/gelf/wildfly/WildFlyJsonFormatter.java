@@ -121,11 +121,11 @@ public class WildFlyJsonFormatter extends ExtFormatter {
     }
 
     public void setFields(String fieldSpec) {
-
         String[] properties = fieldSpec.split(MULTI_VALUE_DELIMITTER);
+
         List<LogMessageField> fields = new ArrayList<LogMessageField>();
         for (String field : properties) {
-            String[] keyValue = fieldSpec.split(MULTI_VALUE_MAPPING_DELIMITTER);
+            String[] keyValue = field.split(MULTI_VALUE_MAPPING_DELIMITTER);
             if (keyValue.length == 2) {
                 String key = keyValue[0];
                 String value = keyValue[1];
@@ -142,7 +142,7 @@ public class WildFlyJsonFormatter extends ExtFormatter {
                                                                + "' to a field. Supported field names are: " + SUPPORTED_FIELDS);
                 }
 
-                if (!SUPPORTED_FIELDS.contains(namedLogField)) {
+                if (!containsField(SUPPORTED_FIELDS, namedLogField)) {
                     throw new IllegalArgumentException("Field '" + field + "' is not supported. Supported field names are: "
                                                                + SUPPORTED_FIELDS);
                 }
@@ -154,6 +154,16 @@ public class WildFlyJsonFormatter extends ExtFormatter {
 
         addFields(fields);
 
+    }
+
+    private boolean containsField(Set<LogMessageField> supportedFields, LogMessageField.NamedLogField namedLogField) {
+        for (LogMessageField field : supportedFields) {
+            if (field.getNamedLogField().equals(namedLogField)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void addFields(Collection<LogMessageField> fields) {
