@@ -27,7 +27,7 @@ public class GelfMessage {
 
     public static final String FIELD_HOST = "host";
     public static final String FIELD_SHORT_MESSAGE = "short_message";
-    public static final String FIELD_FULL_MESSAGE = "full_message";
+    public static final String FIELD_FULL_MESSAGE = "message";
     public static final String FIELD_TIMESTAMP = "timestamp";
     public static final String FIELD_LEVEL = "level";
     public static final String FIELD_FACILITY = "facility";
@@ -149,10 +149,6 @@ public class GelfMessage {
 
         boolean hasFields = writeIfNotEmpty(out, false, FIELD_HOST, getHost());
 
-        if (!isEmpty(shortMessage)) {
-            hasFields = writeIfNotEmpty(out, hasFields, FIELD_SHORT_MESSAGE, getShortMessage());
-        }
-
         hasFields = writeIfNotEmpty(out, hasFields, FIELD_FULL_MESSAGE, getFullMessage());
 
         if (getJavaTimestamp() != 0) {
@@ -162,26 +158,7 @@ public class GelfMessage {
                 hasFields = writeIfNotEmpty(out, hasFields, FIELD_TIMESTAMP, getTimestampAsBigDecimal().toString());
             }
         }
-
-        if (!isEmpty(getLevel())) {
-            if (GELF_VERSION_1_1.equals(version)) {
-                int level;
-                try {
-                    level = Integer.parseInt(getLevel());
-                } catch (NumberFormatException ex) {
-                    // fallback on the default value
-                    level = DEFAUL_LEVEL;
-                }
-                hasFields = writeIfNotEmpty(out, hasFields, FIELD_LEVEL, level);
-            } else {
-                hasFields = writeIfNotEmpty(out, hasFields, FIELD_LEVEL, getLevel());
-            }
-        }
-
-        if (!isEmpty(getFacility())) {
-            hasFields = writeIfNotEmpty(out, hasFields, FIELD_FACILITY, getFacility());
-        }
-
+        
         for (Map.Entry<String, String> additionalField : additonalFields.entrySet()) {
             if (!ID_NAME.equals(additionalField.getKey()) && additionalField.getValue() != null) {
                 String value = additionalField.getValue();
